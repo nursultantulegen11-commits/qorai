@@ -1,0 +1,17 @@
+import { env } from 'cloudflare:workers';
+import { emptyState, type State } from './domain';
+export class AppError extends Error {constructor(message:string,public status=400){super(message)}}
+export function user(request:Request){const id=request.headers.get('oai-authenticated-user-id');if(!id)throw new AppError('Войдите в аккаунт, чтобы работать со складом',401);return id;}
+export function json(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}
+export function failure(error:unknown){if(error instanceof AppError)return json({error:error.message},error.status);console.error('Request failed',error instanceof Error?error.name:'Error');return json({error:'Не удалось выполнить операцию. Повторите попытку.'},500);}
+export async function readState(owner:string){if(!env.DB)throw new AppError('База данных пока недоступна',503);await env.DB.prepare('INSERT INTO workspaces(owner,data,revision) VALUES(?,?,0) ON CONFLICT(owner) DO NOTHING').bind(owner,JSON.stringify(emptyState())).run();const row=await env.DB.prepare('SELECT data,revision FROM workspaces WHERE owner=?').bind(owner).first<{data:string;revision:number}>();if(!row)throw new AppError('Склад не найден',500);return {state:JSON.parse(row.data) as State,revision:row.revision};}
+export async function body(request:Request){if(Number(request.headers.get('content-length')||0)>160000)throw new AppError('Слишком большой запрос',413);const text=await request.text();if(text.length>160000)throw new AppError('Слишком большой запрос',413);try{return JSON.parse(text)}catch{throw new AppError('Некорректный JSON')}}
+export function sameOrigin(request:Request){const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)throw new AppError('Недопустимый источник запроса',403);}
+export async function gemini(parts:any[],instruction:string){const key=(env as any).GEMINI_API_KEY;if(!key)throw new AppError('Для фото и аудио подключите GEMINI_API_KEY на сервере. Текстовый ввод доступен без ключа.',503);
+ const model=(env as any).GEMINI_MODEL||'gemini-2.5-flash';for(let n=0;n<3;n++){const result=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:instruction}]},contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json',temperature:0.1}}),signal:AbortSignal.timeout(35000)});
+ if((result.status===503||result.status===429)&&n<2){await new Promise(r=>setTimeout(r,700*(n+1)));continue;}if(!result.ok)throw new AppError('Сервис ИИ недоступен. Повторите позже или внесите позиции вручную.',502);const data:any=await result.json();const text=data.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||'').join('');try{return JSON.parse(text)}catch{throw new AppError('ИИ вернул некорректный ответ. Проверьте данные вручную.',502);}}
+ throw new AppError('Сервис ИИ перегружен',503);
+}
+
+const aiRequests=new Map<string,{at:number,count:number}>();
+export function limitAI(owner:string){const now=Date.now();if(aiRequests.size>2000)for(const [k,v] of aiRequests)if(now-v.at>60000)aiRequests.delete(k);let entry=aiRequests.get(owner);if(!entry||now-entry.at>60000){entry={at:now,count:0};aiRequests.set(owner,entry)}if(++entry.count>12)throw new AppError("Слишком много запросов. Подождите минуту.",429);}

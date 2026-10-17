@@ -1,0 +1,4 @@
+// Deliberately never cache authenticated HTML, APIs, invoices or inventory.
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('fetch',event=>{if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).catch(()=>new Response('<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QorAI · Нет интернета</title><body style="font-family:Arial;background:#f7f8f5;color:#264c37;text-align:center;padding:20vh 24px"><h1>QorAI</h1><h2>Подключитесь к интернету</h2><p>Ваш склад сохранён на сервере. Вернитесь после подключения.</p><button style="padding:14px 22px;background:#28694f;color:white;border:0;border-radius:8px" onclick="location.reload()">Попробовать снова</button></body></html>',{headers:{'Content-Type':'text/html;charset=utf-8'}})))}});
