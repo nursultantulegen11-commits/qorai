@@ -78,15 +78,19 @@ Sites публикует Worker и применяет миграцию D1. `.ope
 - Оригиналы фото и аудио не сохраняются. Нет офлайн-изменений, кеширования данных склада и фоновой синхронизации.
 - Работоспособность интерфейса проверяется в доступных браузерах. Настоящие iPhone/Android устройства, разрешение микрофона и установка PWA требуют отдельной проверки.
 
-## GitHub
+## Репозиторий и материалы
 
-После авторизации через `gh auth login` создайте приватный репозиторий:
+Приватный GitHub: https://github.com/nursultantulegen11-commits/qorai
+
+- [Быстрый старт и показ проекта](docs/QUICKSTART.md)
+- [Презентация PowerPoint, 8 слайдов](docs/QorAI-Idea-Battle.pptx)
+- [Сценарий питча на 5 минут](docs/pitch-script.md)
 
 ```bash
-gh repo create qorai --private --source=. --remote=github --push
+gh repo clone nursultantulegen11-commits/qorai
 ```
 
-Не включайте `.dev.vars`, `.wrangler`, cookies, базу и тестовые данные. В проекте они исключены из Git.
+Не включайте `.dev.vars`, `.env.local`, `.wrangler`, cookies, базу и тестовые данные. Они исключены из Git.
 
 ## Источники интеграций
 
