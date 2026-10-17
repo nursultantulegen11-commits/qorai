@@ -1,0 +1,46 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: qorai_test
+          POSTGRES_PASSWORD: local-ci-only
+          POSTGRES_DB: qorai_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U qorai_test -d qorai_test" --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://qorai_test:local-ci-only@127.0.0.1:5432/qorai_test
+      APP_URL: http://127.0.0.1:3100
+      PORT: '3100'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Verify persistent API
+        run: |
+          npm start > /tmp/qorai-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:3100/api/health && break
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:3100/api/health
+          npm run test:api
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: server-log
+          path: /tmp/qorai-server.log

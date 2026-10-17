@@ -1,0 +1,13 @@
+import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const root=fileURLToPath(new URL('../',import.meta.url));
+process.chdir(root);
+await import('./migrate.mjs');
+if(process.exitCode)process.exit(process.exitCode);
+const entry=existsSync(path.join(root,'server.js'))?'server.js':'.next/standalone/server.js';
+const server=spawn(process.execPath,[entry],{cwd:root,stdio:'inherit',env:{...process.env,HOSTNAME:'0.0.0.0'}});
+for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>server.kill(signal));
+server.on('exit',code=>{process.exitCode=code??1});
+server.on('error',()=>{console.error('Application server could not start');process.exitCode=1});
