@@ -19,9 +19,8 @@ import { fileURLToPath } from "node:url";
 const MAX_PACKAGES = 100_000;
 const CACHE_SEEDS = new Set(["seed_used", "seed_unavailable", "seed_lockfile_mismatch", "decision_unavailable", "not_applicable"]);
 const STORE_STATES = new Set(["created", "seeded", "reused", "unavailable"]);
-// The caller may use operational status only for
-// initial-setup fallback; an established project always retains pnpm. Broad
-// fetch failures can include TLS/auth errors and stay fatal.
+
+
 const OPERATIONAL_FAILURE_CODES = new Set([
   "ERR_PNPM_UNEXPECTED_STORE",
   "ERR_PNPM_UNEXPECTED_VIRTUAL_STORE",
@@ -36,8 +35,7 @@ const OPERATIONAL_FAILURE_CODES = new Set([
   "ERR_PNPM_FETCH_504",
 ]);
 
-// These are pnpm-reported package IDs, not an assertion about network bytes or
-// image-cache provenance. Do not interpret an installed-tree no-op as 100% reuse.
+
 export class InstallProgress {
   constructor(project) {
     this.project = path.resolve(project);
@@ -94,7 +92,7 @@ function writeReport(fd, report) {
     writeSync(fd, body, 0, "utf8");
     ftruncateSync(fd, Buffer.byteLength(body));
   } catch {
-    // Optional telemetry must not change installation behavior or expose its path.
+
   }
 }
 
@@ -141,8 +139,8 @@ async function openLock(filename, waitSeconds) {
 }
 
 async function holdInstallLocks(projectLock, sharedLock, waitSeconds) {
-  // The shell holds both leases through stdin. EOF (including caller exit)
-  // releases the same open file descriptions that flock locked in its child.
+
+
   const requests = createInterface({ input: process.stdin, crlfDelay: Infinity });
   const project = await openLock(projectLock, "0");
   let shared;
@@ -210,7 +208,7 @@ async function main() {
     const child = spawn(executable, args, { env, stdio: ["inherit", "pipe", "inherit"] });
     const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
     lines.on("line", (line) => showLine(line, progress, failure));
-    // timeout/exec owns the inherited group. Relaying would deliver signals twice.
+
     const signalHandlers = ["SIGINT", "SIGHUP", "SIGTERM"].map((signal) => {
       const handler = () => { receivedSignal ??= signal; };
       process.on(signal, handler);

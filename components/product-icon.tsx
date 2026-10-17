@@ -1,6 +1,6 @@
 import { Coffee, Croissant, CupSoda, Milk, Package, type LucideIcon } from 'lucide-react';
 
-/** Local SVGs keep product icons independent of emoji fonts and operating systems. */
+
 export default function ProductIcon({category}:{category:string}) {
   let Icon:LucideIcon=Package;
   let tone='neutral';
