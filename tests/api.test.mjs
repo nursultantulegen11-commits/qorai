@@ -19,3 +19,16 @@ test('persistent API: authentication, atomic purchase, idempotency, conflict and
  const form=new FormData();form.set('text','Молоко 2 л по 450');const parsed=await fetch(base+'/api/parse',{method:'POST',headers:{'oai-authenticated-user-id':owner},body:form});assert.equal(parsed.status,200);assert.equal((await parsed.json()).items[0].qty,2);
  const csrf=await fetch(base+'/api/action',{method:'POST',headers:{'oai-authenticated-user-id':owner,'Origin':'https://example.com','Content-Type':'application/json'},body:JSON.stringify(action)});assert.equal(csrf.status,403);
 });
+test('supplier contacts persist per account and support editing and removal',async()=>{
+ const account=owner+'-suppliers';
+ const initial=await call('/api/state','GET',undefined,account);assert.deepEqual(initial.data.state.suppliers,[]);
+ const saved=await call('/api/action','POST',{type:'supplierSave',supplier:{name:'Test Supplier',phone:'8 (701) 123-45-67',telegram:'@test_supplier',notes:'API test'},revision:0,requestId:crypto.randomUUID()},account);
+ assert.equal(saved.status,200);const supplier=saved.data.state.suppliers[0];assert.equal(supplier.phone,'+77011234567');
+ const reload=await call('/api/state','GET',undefined,account);assert.equal(reload.data.state.suppliers[0].id,supplier.id);
+ const other=await call('/api/state','GET',undefined,account+'-other');assert.deepEqual(other.data.state.suppliers,[]);
+ const invalid=await call('/api/action','POST',{type:'supplierSave',supplier:{name:'Invalid',telegram:'https://evil.example/a'},revision:1,requestId:crypto.randomUUID()},account);assert.equal(invalid.status,400);
+ const edited=await call('/api/action','POST',{type:'supplierSave',supplier:{...supplier,name:'Updated Supplier'},revision:1,requestId:crypto.randomUUID()},account);assert.equal(edited.status,200);assert.equal(edited.data.state.suppliers.length,1);assert.equal(edited.data.state.suppliers[0].name,'Updated Supplier');
+ const removed=await call('/api/action','POST',{type:'supplierDelete',supplierId:supplier.id,revision:2,requestId:crypto.randomUUID()},account);assert.equal(removed.status,200);assert.deepEqual(removed.data.state.suppliers,[]);
+ const noAuth=await call('/api/action','POST',{type:'supplierSave',supplier:{name:'Blocked',phone:'+77011234567'},revision:0,requestId:crypto.randomUUID()},null);assert.equal(noAuth.status,401);
+});
+test('anonymous visitors can view demo HTML without opening an account workspace',async()=>{const response=await fetch(base+'/');assert.equal(response.status,200);const html=await response.text();assert.match(html,/Попробуйте QorAI в деморежиме/);assert.match(html,/Демонстрационный доступ/);assert.doesNotMatch(html,/API Milk/);});

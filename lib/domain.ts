@@ -1,16 +1,26 @@
+import {validateSupplier,type Supplier} from './suppliers.ts';
 export type Product = { id:string; name:string; unit:string; category:string; min:number; weather:string };
 export type Lot = { id:string; productId:string; qty:number; price:number; expiry:string|null };
 export type Movement = { id:string; productId:string; type:string; qty:number; price:number; at:string; note:string };
-export type State = { name:string; demo:boolean; products:Product[]; lots:Lot[]; movements:Movement[]; requests:string[]; leadDays:number; coverDays:number };
-export const emptyState = ():State => ({name:"Мой бизнес",demo:false,products:[],lots:[],movements:[],requests:[],leadDays:1,coverDays:3});
+export type State = { name:string; demo:boolean; suppliers:Supplier[]; products:Product[]; lots:Lot[]; movements:Movement[]; requests:string[]; leadDays:number; coverDays:number };
+export const emptyState = ():State => ({name:"Мой бизнес",demo:false,suppliers:[],products:[],lots:[],movements:[],requests:[],leadDays:1,coverDays:3});
 export const today = (date = new Date()) => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Almaty',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 export function stock(s:State,id:string) {return Math.round(s.lots.filter(l=>l.productId===id).reduce((a,l)=>a+l.qty,0)*1000)/1000;}
 const num=(v:unknown,min:number,max:number)=>{const n=Number(v);if(!Number.isFinite(n)||n<min||n>max)throw Error('Проверьте количество и цену');return n;};
 const clean=(v:unknown,max=120)=>String(v??'').trim().slice(0,max);
 export function applyAction(current:State, action:any, now=new Date()):State {
- const s:State=structuredClone(current);const at=now.toISOString();const id=()=>crypto.randomUUID();
- if(action.type==='demo') {if(s.products.length||s.movements.length)throw Error('Демо можно включить только в пустом складе');return demoState(now);}
- if(action.type==='resetDemo') {if(!s.demo)throw Error('Очистка доступна только для демоданных');return emptyState();}
+ const s:State=structuredClone(current);s.suppliers??=[];const at=now.toISOString();const id=()=>crypto.randomUUID();
+ if(action.type==='demo') {if(s.products.length||s.movements.length)throw Error('Демо можно включить только в пустом складе');return {...demoState(now),suppliers:s.suppliers};}
+ if(action.type==='resetDemo') {if(!s.demo)throw Error('Очистка доступна только для демоданных');return {...emptyState(),suppliers:s.suppliers};}
+ if(action.type==='supplierSave') {
+  const existing=action.supplier?.id?s.suppliers.find(p=>p.id===action.supplier.id):undefined;
+  if(action.supplier?.id&&!existing)throw Error('Поставщик не найден');
+  const supplier=validateSupplier(action.supplier??{},existing);
+  if(existing)s.suppliers=s.suppliers.map(p=>p.id===supplier.id?supplier:p);
+  else {if(s.suppliers.length>=200)throw Error('Можно сохранить до 200 поставщиков');s.suppliers.push(supplier);}
+  return s;
+ }
+ if(action.type==='supplierDelete') {if(!s.suppliers.some(p=>p.id===action.supplierId))throw Error('Поставщик не найден');s.suppliers=s.suppliers.filter(p=>p.id!==action.supplierId);return s;}
  if(action.type==='settings'){s.name=clean(action.name,80)||'Мой бизнес';s.leadDays=num(action.leadDays,0,14);s.coverDays=num(action.coverDays,1,14);return s;}
  if(action.type==='purchase') {
   if(!Array.isArray(action.items)||!action.items.length||action.items.length>100)throw Error('Нужно от 1 до 100 позиций');

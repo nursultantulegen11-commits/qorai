@@ -1,0 +1,6 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {normalizePhone,normalizeTelegram,supplierLink,buildSupplierOrder,validateSupplier} from '../lib/suppliers.ts';
+test('messenger links use only known domains and encode draft messages',()=>{const s=validateSupplier({name:'Test',phone:'+7 701 123 4567',telegram:'@test_supplier'});const message='Молоко 2 л & кофе?';const wa=new URL(supplierLink(s,'whatsapp',message)!);assert.equal(wa.hostname,'wa.me');assert.equal(wa.pathname,'/77011234567');assert.equal(wa.searchParams.get('text'),message);const tg=new URL(supplierLink(s,'telegram',message)!);assert.equal(tg.hostname,'t.me');assert.equal(tg.pathname,'/test_supplier');assert.equal(tg.searchParams.get('text'),message);});
+test('order draft uses the procurement list and can be edited before opening messenger',()=>{const text=buildSupplierOrder('Дәм',[{name:'Молоко',buy:2.5,unit:'л'}]);assert.match(text,/Дәм/);assert.match(text,/Молоко — 2,5 л/);assert.match(buildSupplierOrder('A',[]),/Укажите товары/);});
+test('invalid contact URLs are rejected',()=>{assert.throws(()=>normalizeTelegram('https://evil.example/test_supplier'));assert.throws(()=>normalizePhone('00000'));assert.equal(normalizePhone('7011234567'),'+77011234567');});
