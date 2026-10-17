@@ -38,7 +38,7 @@ npm run dev -- --port 5173
 
 ### ИИ
 
-Создайте новый ключ в Google AI Studio. Ранее опубликованный ключ отзовите. Для локальной разработки сохраните `GEMINI_API_KEY` и необязательный `GEMINI_MODEL` в игнорируемом `.dev.vars`. Скопируйте имена переменных из `.env.example`. Для публикации настройте серверный секрет через Sites и повторно разверните версию. Ключ не должен попадать в браузер, Git или manifest.
+Создайте ключ в Google AI Studio. Для локальной разработки сохраните `GEMINI_API_KEY` и необязательный `GEMINI_MODEL` в игнорируемом `.dev.vars`. Скопируйте имена переменных из `.env.example`. Для публикации настройте серверный секрет через Sites и повторно разверните версию. Ключ не должен попадать в браузер, Git или manifest.
 
 По умолчанию модель `gemini-2.5-flash`. Её доступность зависит от аккаунта Google. Замените `GEMINI_MODEL`, если эта модель недоступна. ИИ не проверен живым запросом без нового ключа. Обработка накладных передаёт содержимое Google, об этом нужно уведомить будущих пользователей перед реальным пилотом.
 
@@ -84,10 +84,12 @@ Sites публикует Worker и применяет миграцию D1. `.ope
 
 ## Репозиторий и материалы
 
-Приватный GitHub: https://github.com/nursultantulegen11-commits/qorai
+GitHub: https://github.com/nursultantulegen11-commits/qorai
 
 - [Быстрый старт и показ проекта](docs/QUICKSTART.md)
-- [Презентация PowerPoint, 8 слайдов](docs/QorAI-Idea-Battle.pptx)
+- [Презентация PowerPoint, 10 слайдов](docs/QorAI-Idea-Battle.pptx)
+- [Презентация PDF, 10 слайдов](docs/QorAI-Idea-Battle.pdf)
+- [Источники фотографий](docs/presentation-image-sources.md)
 - [Сценарий питча на 5 минут](docs/pitch-script.md)
 
 ```bash
@@ -103,4 +105,4 @@ gh repo clone nursultantulegen11-commits/qorai
 - Telegram deep links: https://core.telegram.org/api/links
 - WhatsApp click-to-chat: https://faq.whatsapp.com/5913398998672934
 
-Дата и правила Idea Battle взяты из сообщения пользователя. Перед подачей заявки уточните их у организаторов. План пилота и цена — гипотезы, не подтверждённые метрики.
+Дата и правила Idea Battle указаны согласно анонсу мероприятия. Перед подачей заявки уточните их у организаторов. План пилота и цена — гипотезы, не подтверждённые метрики.

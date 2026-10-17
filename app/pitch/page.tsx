@@ -1,4 +1,54 @@
 'use client';
 import {useEffect,useState} from 'react';
-const slides=[['QorAI','Запасы под контролем.\nБольше времени на своё дело.','Умный помощник для кафе и магазинов Тараза'],['Товар закончился.\nИли испортился на полке.','Владелец узнаёт о проблеме слишком поздно','Накладные в переписке\nОстатки считают вручную\nЗакупают по памяти\nСроки годности теряются'],['От накладной\nк понятному складу','Проверка владельцем остаётся обязательной','01  Фото, голос или текст\n02  Проверка позиций\n03  Подтверждение прихода\n04  Склад и план закупок'],['Рекомендация объясняет\nсвоё число','Расчёт MVP на основе ваших данных','До 28 дней продаж\nСрок поставки и нужный запас\nУсловные поправки на выходные и погоду\nКонтроль сроков партий'],['Первые клиенты\nрядом с нами','Независимые точки Тараза','Кофейни, мини-маркеты, небольшие кафе\nПлан: 10 интервью и 3 пилотные точки\nИзмеряем время ввода, ошибки и использование'],['9 900 ₸ / месяц','Ценовая гипотеза за одну точку','Сценарий: 30 точек = 297 000 ₸ выручки в месяц\nДо расходов на ИИ, хостинг и поддержку\nПредлагаемый пилот: 14 дней бесплатно'],['Рабочий MVP\nдля первого пилота','Сайт и сервер работают вместе','Склад и журнал в базе данных\nРазделение данных по аккаунтам\nPWA для смартфона\nЭкспорт CSV и JSON'],['QorAI','Чтобы завтра на складе\nбыло именно то, что нужно','Ищем 3 кафе или магазина Тараза для пилота\nКоманда QorAI · Idea Battle · 22.10.2026']];
-export default function Pitch(){const [i,setI]=useState(0);useEffect(()=>{const h=(e:KeyboardEvent)=>{if(['ArrowRight',' '].includes(e.key)){e.preventDefault();setI(v=>Math.min(v+1,slides.length-1))}if(e.key==='ArrowLeft')setI(v=>Math.max(0,v-1))};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[]);return <div style={{minHeight:'100dvh',background:i===0||i===7?'#142e25':'#f7f8f5',color:i===0||i===7?'#d9e5d2':'#233c32',padding:'8vh 8vw',display:'flex',flexDirection:'column'}}><div style={{display:'flex',justifyContent:'space-between',fontSize:12,opacity:.6}}><a href="/">QorAI</a><span>IDEA BATTLE 2026</span></div><div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center',padding:'6vh 0'}}><h1 style={{fontSize:'clamp(34px,5vw,78px)',lineHeight:1.15,whiteSpace:'pre-line',maxWidth:1100,letterSpacing:'-.045em'}}>{slides[i][0]}</h1><h2 style={{fontSize:'clamp(20px,2.6vw,38px)',fontWeight:500,marginTop:30,whiteSpace:'pre-line',lineHeight:1.5,color:i===0||i===7?'#a5c99a':'#628458'}}>{slides[i][1]}</h2><p style={{fontSize:'clamp(14px,1.7vw,24px)',whiteSpace:'pre-line',lineHeight:1.9,marginTop:28,opacity:.75}}>{slides[i][2]}</p></div><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:12,opacity:.6}}>← → для переключения · {i+1} / {slides.length}</span><div style={{display:'flex',gap:12}}><button className="secondary" disabled={i===0} onClick={()=>setI(i-1)}>Назад</button><button className="primary" disabled={i===slides.length-1} onClick={()=>setI(i+1)}>Далее</button></div></div></div>}
+import {ArrowLeft,ArrowRight,Download,Expand,ExternalLink} from 'lucide-react';
+import pitch from './slides.json';
+import './pitch.css';
+
+export default function Pitch(){
+ const [index,setIndex]=useState(0);
+ const [screenError,setScreenError]=useState('');
+ const slide=pitch[index];
+ useEffect(()=>{
+  const onKey=(event:KeyboardEvent)=>{
+   if((event.target as HTMLElement)?.closest('input,textarea,[contenteditable]'))return;
+   if(event.key===' '&&(event.target as HTMLElement)?.closest('button,a,summary'))return;
+   if(['ArrowRight',' ','PageDown'].includes(event.key)){event.preventDefault();setIndex(v=>Math.min(v+1,pitch.length-1));}
+   if(['ArrowLeft','PageUp'].includes(event.key)){event.preventDefault();setIndex(v=>Math.max(0,v-1));}
+   if(event.key==='Home'){event.preventDefault();setIndex(0);}
+   if(event.key==='End'){event.preventDefault();setIndex(pitch.length-1);}
+  };
+  window.addEventListener('keydown',onKey);
+  return()=>window.removeEventListener('keydown',onKey);
+ },[]);
+ async function fullScreen(){
+  try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();setScreenError('');}
+  catch{setScreenError('Полноэкранный режим недоступен в этом браузере. Презентацию можно открыть в PowerPoint.');}
+ }
+ return <main className="pitch-view">
+  <header className="pitch-toolbar">
+   <a href="/" className="pitch-brand" aria-label="QorAI — открыть сайт">QorAI<span>Idea Battle 2026</span></a>
+   <div className="pitch-toolbar-actions">
+    <a className="pitch-text-link" href="/?demo=1">Демо сайта <ExternalLink size={16}/></a>
+    <a className="pitch-tool pitch-pdf" href="/pitch/QorAI-Idea-Battle-2026.pdf" download aria-label="Скачать презентацию PDF"><Download size={17}/><span>PDF</span></a>
+    <button className="pitch-tool" type="button" onClick={fullScreen} aria-label="Во весь экран"><Expand size={19}/></button>
+   </div>
+  </header>
+  <section className="pitch-stage" aria-label={`Слайд ${index+1} из ${pitch.length}: ${slide.title}`}>
+   <img src={`/pitch/slide-${String(index+1).padStart(2,'0')}.jpg`} width="1280" height="720" alt={slide.alt} fetchPriority={index===0?'high':'auto'}/>
+  </section>
+  <nav className="pitch-navigation" aria-label="Управление презентацией">
+   <button className="pitch-arrow" onClick={()=>setIndex(v=>Math.max(0,v-1))} disabled={index===0} aria-label="Предыдущий слайд"><ArrowLeft size={20}/></button>
+   <div className="pitch-current" aria-live="polite"><span>{String(index+1).padStart(2,'0')} / {pitch.length}</span><strong>{slide.title}</strong></div>
+   <button className="pitch-arrow pitch-arrow-next" onClick={()=>setIndex(v=>Math.min(pitch.length-1,v+1))} disabled={index===pitch.length-1} aria-label="Следующий слайд"><ArrowRight size={20}/></button>
+  </nav>
+  <div className="pitch-progress" aria-hidden="true">{pitch.map((s,i)=><button type="button" key={s.title} className={i===index?'is-current':''} tabIndex={-1} onClick={()=>setIndex(i)} aria-label={`Слайд ${i+1}: ${s.title}`}/>)}</div>
+  {screenError&&<p className="pitch-message" role="status">{screenError}</p>}
+  <details className="pitch-notes">
+   <summary>Заметки для выступления <span>{slide.time}</span></summary>
+   <p>{slide.note}</p>
+   <a href="/pitch/QorAI-pitch-script.md" download>Скачать текст на пять минут</a>
+   <a className="pitch-pptx-link" href="/pitch/QorAI-Idea-Battle-2026.pptx" download>PowerPoint для редактирования</a>
+   <footer>Фотографии для иллюстрации: <a href="https://unsplash.com/es/fotos/barista-trabajando-detras-de-un-mostrador-de-cafe-H7PLuaYW6UQ" target="_blank" rel="noreferrer">Long Chung</a>, <a href="https://unsplash.com/photos/fresh-lettuce-and-vegetables-displayed-at-a-market-V-j4JAw_mFk" target="_blank" rel="noreferrer">Sean Thoman</a> и <a href="https://unsplash.com/photos/a-vendor-arranges-fresh-produce-at-an-outdoor-market-oKw2DRoL2QM" target="_blank" rel="noreferrer">Lawrence Chismorie</a> / <a href="https://unsplash.com/license" target="_blank" rel="noreferrer">Unsplash</a>. На снимках сайта учебные данные.</footer>
+  </details>
+ </main>;
+}
