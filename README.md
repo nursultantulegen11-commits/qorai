@@ -2,6 +2,8 @@
 
 Склад и закупки для кафе и магазинов Тараза. Команда QorAI, Idea Battle 2026.
 
+[Открыть сайт](https://qorai-taraz.onrender.com) · [Презентация в браузере](https://qorai-taraz.onrender.com/pitch)
+
 Next.js на Node.js, PostgreSQL и собственные аккаунты с входом по email и паролю. Приложение можно разместить в Render или на своём сервере через Docker.
 
 - [Презентация PDF](docs/QorAI-Idea-Battle.pdf)

@@ -1,3 +1,7 @@
+Сайт: https://qorai-taraz.onrender.com
+
+Презентация: https://qorai-taraz.onrender.com/pitch
+
 # QorAI: показ проекта
 
 Репозиторий: https://github.com/nursultantulegen11-commits/qorai
